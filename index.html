@@ -78,7 +78,8 @@
       margin-top: 5px;
     }
     button.delete-btn,
-    button.complete-btn {
+    button.complete-btn,
+    button.correction-btn {
       padding: 5px 10px;
       border: none;
       border-radius: 3px;
@@ -99,6 +100,13 @@
     }
     button.complete-btn:hover {
       background-color: #0056b3;
+    }
+    button.correction-btn {
+      background-color: #ffc107;
+      color: #333;
+    }
+    button.correction-btn:hover {
+      background-color: #e0a800;
     }
     #message {
       text-align: center;
@@ -135,25 +143,21 @@
   </div>
 
   <script>
-    // Function to show temporary message
     function showMessage(text) {
       const msg = document.getElementById('message');
       msg.textContent = text;
       setTimeout(() => { msg.textContent = ''; }, 2000);
     }
 
-    // Load tasks from localStorage or return empty array
     function loadTasks() {
       const tasks = localStorage.getItem('tasks');
       return tasks ? JSON.parse(tasks) : [];
     }
 
-    // Save tasks array to localStorage
     function saveTasksToStorage(tasks) {
       localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
-    // Render tasks in UI
     function renderTasks() {
       const taskList = document.getElementById('task-list');
       taskList.innerHTML = '';
@@ -163,36 +167,60 @@
         const li = document.createElement('li');
         li.className = task.completed ? 'completed' : '';
         li.innerHTML = `
-          <strong>${task.title}</strong> (${task.level})<br>
-          Assigned to: ${task.user}<br>
-          Description: ${task.desc}<br>
-          Due: ${new Date(task.date).toLocaleString()}<br>
+          <strong class="task-title">${task.title}</strong> 
+          (<span class="task-level">${task.level}</span>)<br>
+          Assigned to: <span class="task-user">${task.user}</span><br>
+          Description: <span class="task-desc">${task.desc}</span><br>
+          Due: <span class="task-date">${new Date(task.date).toLocaleString()}</span><br>
           <div class="btn-group">
             <button class="complete-btn">${task.completed ? 'Undo Complete' : 'Mark Complete'}</button>
-            <button class="edit-btn">Correction</button>
+            <button class="correction-btn">Correction</button>
             <button class="delete-btn">Delete</button>
           </div>
         `;
 
-        // Complete button click
+        // Mark complete/undo complete
         li.querySelector('.complete-btn').addEventListener('click', () => {
           tasks[index].completed = !tasks[index].completed;
           saveTasksToStorage(tasks);
           renderTasks();
         });
 
-        // Delete button click
+        // Delete
         li.querySelector('.delete-btn').addEventListener('click', () => {
           tasks.splice(index, 1);
           saveTasksToStorage(tasks);
           renderTasks();
         });
 
+        // Correction/Edit
+        li.querySelector('.correction-btn').addEventListener('click', () => {
+          const newLevel = prompt("Update level (low/medium/high):", task.level);
+          const newUser = prompt("Update user name:", task.user);
+          const newTitle = prompt("Update task title:", task.title);
+          const newDesc = prompt("Update description:", task.desc);
+          const newDate = prompt("Update due date (yyyy-mm-ddThh:mm):", task.date);
+
+          if (newUser && newTitle && newDesc && newDate && newLevel) {
+            tasks[index] = {
+              ...tasks[index],
+              level: newLevel,
+              user: newUser,
+              title: newTitle,
+              desc: newDesc,
+              date: newDate
+            };
+            saveTasksToStorage(tasks);
+            renderTasks();
+          } else {
+            alert("All fields are required for correction.");
+          }
+        });
+
         taskList.appendChild(li);
       });
     }
 
-    // Save new task
     function saveTask() {
       const level = document.getElementById('task-level').value;
       const user = document.getElementById('user-name').value.trim();
@@ -220,7 +248,7 @@
       saveTasksToStorage(tasks);
       renderTasks();
 
-      // Clear inputs
+      // Clear form
       document.getElementById('task-level').value = "select level";
       document.getElementById('user-name').value = "";
       document.getElementById('task-title').value = "";
@@ -229,25 +257,7 @@
 
       showMessage("Task added successfully!");
     }
-    li.querySelector('.edit-btn').addEventListener('click', function () {
-        const newLevel = prompt("Update level (low/medium/high):", li.querySelector('.task-level').textContent);
-        const newUser = prompt("Update user name:", li.querySelector('.task-user').textContent);
-        const newTitle = prompt("Update task title:", li.querySelector('.task-title').textContent);
-        const newDesc = prompt("Update description:", li.querySelector('.task-desc').textContent);
-        const newDate = prompt("Update due date (yyyy-mm-ddThh:mm):", new Date(li.querySelector('.task-date').textContent).toISOString().slice(0,16));
 
-        if (newUser && newTitle && newDesc && newDate && newLevel) {
-          li.querySelector('.task-level').textContent = newLevel;
-          li.querySelector('.task-user').textContent = newUser;
-          li.querySelector('.task-title').textContent = newTitle;
-          li.querySelector('.task-desc').textContent = newDesc;
-          li.querySelector('.task-date').textContent = new Date(newDate).toLocaleString();
-        } else {
-          alert("All fields are required for correction.");
-        }
-    });
-
-    // Initial render on page load
     window.onload = renderTasks;
   </script>
 </body>
